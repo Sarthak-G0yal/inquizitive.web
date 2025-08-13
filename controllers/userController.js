@@ -111,30 +111,42 @@ export const verifyEmail = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
+    return res.status(400).json({ error: "Email and password are required" });
   }
   try {
-    const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    const { rows } = await db.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
     const user = rows[0];
-    if (user.role === 'admin') {
-      return res.status(403).json({ error: 'Use the admin login page for admin accounts' });
+    if (user.role === "admin") {
+      return res
+        .status(403)
+        .json({ error: "Use the admin login page for admin accounts" });
     }
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Incorrect password' });
+      return res.status(401).json({ error: "Incorrect password" });
     }
     if (!user.verified) {
-      return res.status(403).json({ error: 'Please verify your email' });
+      return res.status(403).json({ error: "Please verify your email" });
     }
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', maxAge: 3600000 });
-    return res.status(200).json({ message: 'Login successful', redirect: '/' });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 3600000,
+    });
+    return res.status(200).json({ message: "Login successful", redirect: "/" });
   } catch (err) {
-    console.error('Login error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error("Login error:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -244,7 +256,7 @@ export const getMe = async (req, res) => {
     console.log("Fetching user with ID:", userId);
     const { rows } = await db.query(
       // FIX: Include 'role' in the SELECT statement
-      "SELECT id, user_name, email, phone_number, avatar_url AS avatar, role FROM users WHERE id = $1", 
+      "SELECT id, user_name, email, phone_number, avatar_url AS avatar, role FROM users WHERE id = $1",
       [userId]
     );
     const user = rows[0];
@@ -258,7 +270,6 @@ export const getMe = async (req, res) => {
     return sendError(res, 500, "An internal server error occurred.");
   }
 };
-
 
 // --- Update User Profile ---
 export const updateProfile = async (req, res) => {
